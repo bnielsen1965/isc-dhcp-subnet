@@ -61,28 +61,35 @@ function GetDHCPInterfacesString()
 # RemoveDHCPInterface "eth0"
 function RemoveDHCPInterface()
 {
-  local interface="$1"
+  AdjustDHCPInterfaces "remove" "$1"
+}
+
+# InsertDHCPInterface "eth0"
+function InsertDHCPInterface()
+{
+  AdjustDHCPInterfaces "insert" "$1"
+}
+
+# AdjustDHCPInterfaces remove|insert "eth0"
+function AdjustDHCPInterfaces()
+{
+  local action="$1"
+  local interface="$2"
   local newinterfaces=""
   local interfacestring="$(GetDHCPInterfacesString)"
   local interfaces=$(echo $interfacestring | tr "," "\n") # string to array
-  # filtered out the removed interface
+  # filtered out the adjusted interface
   for iface in $interfaces; do
     iface="$(TrimString "$iface")"
     if [ "$iface" != "$interface" ]; then
       newinterfaces="$newinterfaces,$iface"
     fi
   done
-  newinterfaces=${newinterfaces//^,} # remove leading ,
-  sed -i.backup "s/\(\s*INTERFACESv4=\"\).*\(\".*$\)/\1$newinterfaces\2/" "${DHCPD_DEFAULT_PATH}/${DHCPD_DEFAULT_FILE}"
-}
-
-# InsertDHCPInterface "eth0"
-function InsertDHCPInterface()
-{
-  local interface="$1"
-  local interfacestring="$(GetDHCPInterfacesString)"
-  local newinterfaces="$interfacestring,$interface"
-  newinterfaces=${newinterfaces//^,} # remove leading ,
+  newinterfaces="${newinterfaces#,}" # remove leading ,
+  if [ "$action" = "insert" ]; then
+    newinterfaces="$newinterfaces,$interface"
+  fi
+  newinterfaces="${newinterfaces#,}" # remove leading ,
   sed -i.backup "s/\(\s*INTERFACESv4=\"\).*\(\".*$\)/\1$newinterfaces\2/" "${DHCPD_DEFAULT_PATH}/${DHCPD_DEFAULT_FILE}"
 }
 
@@ -104,13 +111,14 @@ function RemoveDHCPSubnet()
   local subnet="$1"
   local header="$(GetDHCPHeader "$subnet")"
   local footer="$(GetDHCPFooter "$subnet")"
-  sed -i.backup '/^$header$/,/^$footer$/{d}' "$DHCPD_CONF_PATH/$DHCPD_CONF_FILE"
+  sed -i.backup "/^$header$/,/^$footer$/{d}" "$DHCPD_CONF_PATH/$DHCPD_CONF_FILE"
 }
 
 #InsertDHCPSubnet "subnet"
 function InsertDHCPSubnet()
 {
   local subnet="$1"
+  RemoveDHCPSubnet "$subnet"
   local header="$(GetDHCPHeader "$subnet")"
   local footer="$(GetDHCPFooter "$subnet")"
   local block=$(cat <<EOF
@@ -144,11 +152,13 @@ fi
 
 case ${COMMAND} in
   "remove")
-  RemoveDHCPInterface "$COMMAND_INTERFACE"
+#  RemoveDHCPInterface "$COMMAND_INTERFACE"
+  AdjustDHCPInterfaces "remove" "$COMMAND_INTERFACE"
   RemoveDHCPSubnet "$COMMAND_SUBNET"
   ;;
   "create")
-  InsertDHCPInterface "$COMMAND_INTERFACE"
+#  InsertDHCPInterface "$COMMAND_INTERFACE"
+  AdjustDHCPInterfaces "insert" "$COMMAND_INTERFACE"
   InsertDHCPSubnet "$COMMAND_SUBNET"
   ;;
   *)
