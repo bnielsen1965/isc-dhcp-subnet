@@ -24,7 +24,7 @@ $PACKAGE - Create or remove a subnet configuration for isc-dhcp-server.
 Used to modify ${DHCPD_CONF_PATH}/${DHCPD_CONF_FILE} with a subnet address block
 and the interface settings in ${DHCPD_DEFAULT_PATH}/${DHCPD_DEFAULT_FILE}.
 
-$PACKAGE [command] [subnet] [interface]
+$PACKAGE command subnet [interface]
   arguments:
   command - the command to execute, c|create, r|remove
   subnet - the subnet address to use for the dhcp block
@@ -56,18 +56,6 @@ function TrimString()
 function GetDHCPInterfacesString()
 {
   echo "$(sed -n -e 's/\s*INTERFACESv4="\(.*\)"/\1/p' ${DHCPD_DEFAULT_PATH}/${DHCPD_DEFAULT_FILE})"
-}
-
-# RemoveDHCPInterface "eth0"
-function RemoveDHCPInterface()
-{
-  AdjustDHCPInterfaces "remove" "$1"
-}
-
-# InsertDHCPInterface "eth0"
-function InsertDHCPInterface()
-{
-  AdjustDHCPInterfaces "insert" "$1"
 }
 
 # AdjustDHCPInterfaces remove|insert "eth0"
@@ -146,19 +134,17 @@ if [ -z "$COMMAND_SUBNET" ]; then
   Die "Missing subnet."
 fi
 
-if [ -z "$COMMAND_INTERFACE" ]; then
-  Die "Missing interface."
-fi
-
 case ${COMMAND} in
   "remove")
-#  RemoveDHCPInterface "$COMMAND_INTERFACE"
-  AdjustDHCPInterfaces "remove" "$COMMAND_INTERFACE"
+  if [ ! -z "$COMMAND_INTERFACE" ]; then
+    AdjustDHCPInterfaces "remove" "$COMMAND_INTERFACE"
+  fi
   RemoveDHCPSubnet "$COMMAND_SUBNET"
   ;;
   "create")
-#  InsertDHCPInterface "$COMMAND_INTERFACE"
-  AdjustDHCPInterfaces "insert" "$COMMAND_INTERFACE"
+  if [ ! -z "$COMMAND_INTERFACE" ]; then
+    AdjustDHCPInterfaces "insert" "$COMMAND_INTERFACE"
+  fi
   InsertDHCPSubnet "$COMMAND_SUBNET"
   ;;
   *)
