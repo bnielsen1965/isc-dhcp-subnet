@@ -134,6 +134,9 @@ if [ -z "$COMMAND_SUBNET" ]; then
   Die "Missing subnet."
 fi
 
+# make sure subnet supports netmask 255.255.255.0
+COMMAND_SUBNET="${COMMAND_SUBNET%.*}.0"
+
 case ${COMMAND} in
   "remove")
   if [ ! -z "$COMMAND_INTERFACE" ]; then
