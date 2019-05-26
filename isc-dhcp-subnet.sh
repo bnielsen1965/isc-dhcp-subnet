@@ -26,7 +26,7 @@ and the interface settings in ${DHCPD_DEFAULT_PATH}/${DHCPD_DEFAULT_FILE}.
 
 $PACKAGE command subnet [interface]
   arguments:
-  command - the command to execute, c|create, r|remove
+  command - the command to execute, create | remove
   subnet - the subnet address to use for the dhcp block
   interface - the interface that will be used for dhcp service
 ENDOFMESSAGE
